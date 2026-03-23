@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TechWorld — Hướng dẫn setup</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:wght@300;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0f14;--surface:#13161d;--surface2:#1a1e28;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --accent:#e8b85a;--accent-dim:rgba(232,184,90,0.1);
+  --text:#f0ede8;--muted:#6b7080;--dim:#2e3240;
+  --success:#4ade80;--warn:#fb923c;--info:#60a5fa;
+  --mono:'DM Mono',monospace;--display:'Fraunces',serif;--body:'DM Sans',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-weight:300;line-height:1.6;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:14px 48px;border-bottom:1px solid var(--border);background:rgba(13,15,20,0.9);backdrop-filter:blur(16px)}
+.nav-logo{font-family:var(--mono);font-size:13px;letter-spacing:.08em}
+.nav-logo span{color:var(--accent);margin-right:6px}
+.nav-links{display:flex;gap:4px}
+.nav-link{font-family:var(--mono);font-size:11px;color:var(--muted);padding:5px 12px;border-radius:6px;cursor:pointer;transition:color .15s,background .15s;text-decoration:none}
+.nav-link:hover{color:var(--text);background:var(--surface2)}
+.nav-link.active{color:var(--accent);background:var(--accent-dim)}
+
+.hero{position:relative;z-index:1;padding:60px 48px 40px;border-bottom:1px solid var(--border)}
+.eyebrow{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.eyebrow::before{content:'';width:20px;height:1px;background:var(--accent)}
+h1{font-family:var(--display);font-size:clamp(32px,4vw,52px);font-weight:600;line-height:1.1;letter-spacing:-.02em;margin-bottom:12px}
+h1 em{font-style:italic;color:var(--accent);font-weight:300}
+.hero-sub{font-size:14px;color:var(--muted);max-width:520px}
+
+.progress-bar{position:relative;z-index:1;display:flex;align-items:center;padding:0 48px;border-bottom:1px solid var(--border);overflow-x:auto}
+.prog-step{display:flex;align-items:center;gap:0;cursor:pointer;flex-shrink:0}
+.prog-step-inner{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:2px solid transparent;transition:border-color .2s;white-space:nowrap}
+.prog-step.done .prog-step-inner{border-bottom-color:var(--success)}
+.prog-step.active .prog-step-inner{border-bottom-color:var(--accent)}
+.prog-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;font-weight:500;flex-shrink:0;border:1px solid var(--border2);color:var(--muted);transition:all .2s}
+.prog-step.done .prog-num{background:rgba(74,222,128,0.15);border-color:rgba(74,222,128,0.3);color:var(--success)}
+.prog-step.active .prog-num{background:var(--accent-dim);border-color:rgba(232,184,90,0.3);color:var(--accent)}
+.prog-label{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.prog-step.active .prog-label{color:var(--text)}
+.prog-step.done .prog-label{color:var(--success)}
+.prog-arrow{font-size:10px;color:var(--dim);padding:0 4px;flex-shrink:0}
+
+.content{position:relative;z-index:1;display:grid;grid-template-columns:240px 1fr;gap:0;min-height:calc(100vh - 200px)}
+
+.sidebar{padding:32px 24px;border-right:1px solid var(--border);position:sticky;top:57px;height:calc(100vh - 57px);overflow-y:auto}
+.sidebar-section{margin-bottom:24px}
+.sidebar-label{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.sidebar-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--muted);transition:all .15s;text-decoration:none}
+.sidebar-item:hover{background:var(--surface2);color:var(--text)}
+.sidebar-item.active{background:var(--accent-dim);color:var(--accent)}
+.sidebar-item .s-num{font-family:var(--mono);font-size:10px;opacity:.5;min-width:16px}
+
+.main-content{padding:40px 48px 80px}
+
+.section{margin-bottom:56px}
+.section-header{display:flex;align-items:flex-start;gap:16px;margin-bottom:24px}
+.section-badge{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:500;flex-shrink:0;margin-top:2px}
+.badge-1{background:rgba(232,184,90,0.12);color:var(--accent);border:1px solid rgba(232,184,90,0.2)}
+.badge-2{background:rgba(96,165,250,0.1);color:var(--info);border:1px solid rgba(96,165,250,0.2)}
+.badge-3{background:rgba(74,222,128,0.1);color:var(--success);border:1px solid rgba(74,222,128,0.2)}
+.badge-4{background:rgba(251,146,60,0.1);color:var(--warn);border:1px solid rgba(251,146,60,0.2)}
+.badge-5{background:rgba(167,139,250,0.1);color:#a78bfa;border:1px solid rgba(167,139,250,0.2)}
+h2{font-family:var(--body);font-size:20px;font-weight:500;margin-bottom:4px}
+.section-desc{font-size:13px;color:var(--muted)}
+
+.callout{border-radius:10px;padding:16px 20px;margin-bottom:20px;display:flex;gap:14px;align-items:flex-start}
+.callout-tip{background:rgba(232,184,90,0.07);border:1px solid rgba(232,184,90,0.15)}
+.callout-info{background:rgba(96,165,250,0.07);border:1px solid rgba(96,165,250,0.15)}
+.callout-warn{background:rgba(251,146,60,0.07);border:1px solid rgba(251,146,60,0.15)}
+.callout-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+.callout-text{font-size:13px;color:var(--muted);line-height:1.6}
+.callout-text strong{color:var(--text);font-weight:500}
+
+.steps{display:flex;flex-direction:column;gap:16px}
+.step{display:flex;gap:16px;align-items:flex-start}
+.step-num{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:500;flex-shrink:0;margin-top:2px;border:1px solid var(--border2);color:var(--muted)}
+.step-body{flex:1;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.step:last-child .step-body{border-bottom:none}
+.step-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:6px}
+.step-text{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:8px}
+.step-text:last-child{margin-bottom:0}
+
+.code-block{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin:10px 0;font-family:var(--mono);font-size:12px;color:var(--text);line-height:1.6;overflow-x:auto;position:relative}
+.code-block .cb-label{font-size:10px;color:var(--muted);margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:8px;letter-spacing:.06em}
+.code-block code{white-space:pre}
+.copy-btn{position:absolute;top:10px;right:10px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--muted);font-family:var(--mono);font-size:10px;padding:4px 10px;cursor:pointer;transition:all .15s}
+.copy-btn:hover{color:var(--text);border-color:var(--border2)}
+.copy-btn.copied{color:var(--success);border-color:rgba(74,222,128,0.3)}
+
+.img-placeholder{background:var(--surface);border:1px dashed var(--border2);border-radius:10px;padding:32px;text-align:center;margin:16px 0}
+.img-placeholder p{font-family:var(--mono);font-size:12px;color:var(--dim)}
+
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 10px;border-radius:100px;margin:0 2px}
+.pill-amber{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(232,184,90,0.2)}
+.pill-blue{background:rgba(96,165,250,0.1);color:var(--info);border:1px solid rgba(96,165,250,0.15)}
+.pill-green{background:rgba(74,222,128,0.1);color:var(--success);border:1px solid rgba(74,222,128,0.15)}
+.pill-red{background:rgba(248,113,113,0.1);color:#f87171;border:1px solid rgba(248,113,113,0.15)}
+
+.check-list{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.check-item{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+.check-item::before{content:'✓';font-family:var(--mono);font-size:11px;color:var(--success);width:18px;flex-shrink:0}
+
+.url-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin:10px 0}
+.url-label{font-family:var(--mono);font-size:10px;color:var(--muted);min-width:60px}
+.url-val{font-family:var(--mono);font-size:12px;color:var(--info);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.hero{animation:fadeUp .4s ease both}
+.progress-bar{animation:fadeUp .4s .05s ease both}
+.content{animation:fadeUp .4s .1s ease both}
+
+@media(max-width:800px){
+  .content{grid-template-columns:1fr}
+  .sidebar{display:none}
+  nav,div.hero,.main-content{padding-left:20px;padding-right:20px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo"><span>▸</span>TechWorld ECommerce</div>
+  <div class="nav-links">
+    <a class="nav-link" href="landing.html">Landing Page</a>
+    <a class="nav-link active" href="#">Setup Guide</a>
+    <a class="nav-link" href="index.html">Dashboard</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="eyebrow">Project setup guide</div>
+  <h1>Hướng dẫn<br><em>cài đặt hệ thống</em></h1>
+  <p class="hero-sub">Làm theo 5 bước để kết nối Landing Page → Google Sheet → Dashboard hoàn chỉnh.</p>
+</div>
+
+<div class="progress-bar">
+  <div class="prog-step done">
+    <div class="prog-step-inner">
+      <div class="prog-num">✓</div>
+      <span class="prog-label">Data CSV</span>
+    </div>
+  </div>
+  <div class="prog-arrow">›</div>
+  <div class="prog-step done">
+    <div class="prog-step-inner">
+      <div class="prog-num">✓</div>
+      <span class="prog-label">Landing Page</span>
+    </div>
+  </div>
+  <div class="prog-arrow">›</div>
+  <div class="prog-step active">
+    <div class="prog-step-inner">
+      <div class="prog-num">3</div>
+      <span class="prog-label">Google Sheet</span>
+    </div>
+  </div>
+  <div class="prog-arrow">›</div>
+  <div class="prog-step">
+    <div class="prog-step-inner">
+      <div class="prog-num">4</div>
+      <span class="prog-label">Apps Script</span>
+    </div>
+  </div>
+  <div class="prog-arrow">›</div>
+  <div class="prog-step">
+    <div class="prog-step-inner">
+      <div class="prog-num">5</div>
+      <span class="prog-label">Dashboard</span>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Các bước</div>
+      <a class="sidebar-item active" href="#step1"><span class="s-num">01</span>Convert Sheet</a>
+      <a class="sidebar-item" href="#step2"><span class="s-num">02</span>Apps Script</a>
+      <a class="sidebar-item" href="#step3"><span class="s-num">03</span>Deploy Web App</a>
+      <a class="sidebar-item" href="#step4"><span class="s-num">04</span>Gán URL vào form</a>
+      <a class="sidebar-item" href="#step5"><span class="s-num">05</span>Mở Dashboard</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Files</div>
+      <a class="sidebar-item" href="landing.html"><span class="s-num">→</span>landing.html</a>
+      <a class="sidebar-item" href="#"><span class="s-num">→</span>apps_script.gs</a>
+      <a class="sidebar-item" href="index.html"><span class="s-num">→</span>dashboard.html</a>
+    </div>
+  </div>
+
+  <div class="main-content">
+
+    <!-- STEP 1 -->
+    <div class="section" id="step1">
+      <div class="section-header">
+        <div class="section-badge badge-1">01</div>
+        <div>
+          <h2>Convert .xlsx → Google Sheet</h2>
+          <p class="section-desc">File xlsx chưa phải Google Sheet thật — cần convert để Apps Script đọc được</p>
+        </div>
+      </div>
+
+      <div class="callout callout-info">
+        <span class="callout-icon">ℹ</span>
+        <div class="callout-text">
+          Bạn đã có file <strong>techworld_ecommerce_clean.xlsx</strong> trong folder <strong>Agentic AI</strong> trên Drive. Chỉ cần mở và lưu lại dạng Google Sheets.
+        </div>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Mở file trong Google Drive</div>
+            <div class="step-text">Vào Drive → folder <span class="pill pill-amber">Agentic AI</span> → double-click vào <span class="pill pill-blue">techworld_ecommerce_clean.xlsx</span></div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Lưu dạng Google Sheets</div>
+            <div class="step-text">Trong menu: <span class="pill pill-amber">File</span> → <span class="pill pill-amber">Save as Google Sheets</span></div>
+            <div class="step-text">Google sẽ tạo một bản copy mới dưới dạng <code>.gsheet</code> — đây mới là file chúng ta sẽ làm việc.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Kiểm tra tên tab Sheet</div>
+            <div class="step-text">Nhìn xuống dưới cùng, tab sheet phải có tên <span class="pill pill-amber">techworld_ecommerce_clean</span> — nếu tên khác, hãy rename đúng tên này (hoặc cập nhật biến <code>SHEET_NAME</code> trong Apps Script).</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Copy Sheet ID từ URL</div>
+            <div class="step-text">URL Sheet sẽ có dạng:</div>
+            <div class="url-box">
+              <span class="url-label">URL</span>
+              <span class="url-val">https://docs.google.com/spreadsheets/d/<strong style="color:var(--accent)">[SHEET_ID]</strong>/edit</span>
+            </div>
+            <div class="step-text">Lưu lại phần <span class="pill pill-amber">[SHEET_ID]</span> này — sẽ cần khi cấu hình Apps Script từ ngoài file.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="section" id="step2">
+      <div class="section-header">
+        <div class="section-badge badge-2">02</div>
+        <div>
+          <h2>Paste Apps Script vào Sheet</h2>
+          <p class="section-desc">Script sẽ xử lý cả write (từ form) lẫn read (cho dashboard)</p>
+        </div>
+      </div>
+
+      <div class="callout callout-tip">
+        <span class="callout-icon">★</span>
+        <div class="callout-text">
+          File <strong>apps_script.gs</strong> đã được tạo sẵn — chứa đầy đủ <code>doPost</code> (nhận data từ form) và <code>doGet</code> (trả data cho dashboard).
+        </div>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Mở Apps Script Editor</div>
+            <div class="step-text">Trong Google Sheet: <span class="pill pill-blue">Extensions</span> → <span class="pill pill-blue">Apps Script</span></div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Xóa code mặc định và paste code mới</div>
+            <div class="step-text">Xóa hết nội dung file <code>Code.gs</code> mặc định, paste toàn bộ nội dung file <span class="pill pill-amber">apps_script.gs</span> vào.</div>
+            <div class="code-block">
+              <div class="cb-label">apps_script.gs — dòng đầu tiên sẽ trông như sau:</div>
+              <button class="copy-btn" onclick="copyCode(this)">copy</button>
+              <code>const SHEET_NAME = 'techworld_ecommerce_clean';
+const SPREADSHEET_ID = ''; // để trống nếu script nằm trong chính Sheet</code>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Lưu script</div>
+            <div class="step-text">Nhấn <span class="pill pill-amber">Ctrl+S</span> hoặc click icon lưu. Đặt tên project là <code>TechWorld API</code>.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="section" id="step3">
+      <div class="section-header">
+        <div class="section-badge badge-3">03</div>
+        <div>
+          <h2>Deploy thành Web App</h2>
+          <p class="section-desc">Tạo URL endpoint công khai để Landing Page và Dashboard gọi vào</p>
+        </div>
+      </div>
+
+      <div class="callout callout-warn">
+        <span class="callout-icon">!</span>
+        <div class="callout-text">
+          Phần này quan trọng nhất — cần set <strong>Execute as: Me</strong> và <strong>Who has access: Anyone</strong> để Landing Page có thể POST data vào.
+        </div>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Click Deploy → New deployment</div>
+            <div class="step-text">Góc trên phải Apps Script editor: <span class="pill pill-blue">Deploy</span> → <span class="pill pill-blue">New deployment</span></div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Chọn loại deployment</div>
+            <div class="step-text">Click icon ⚙️ → chọn <span class="pill pill-amber">Web App</span></div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Cấu hình quyền truy cập</div>
+            <div class="check-list">
+              <div class="check-item">Description: <code>TechWorld API v1</code></div>
+              <div class="check-item">Execute as: <span class="pill pill-amber">Me (your email)</span></div>
+              <div class="check-item">Who has access: <span class="pill pill-green">Anyone</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Lấy Web App URL</div>
+            <div class="step-text">Sau khi deploy, copy URL có dạng:</div>
+            <div class="url-box">
+              <span class="url-label">URL</span>
+              <span class="url-val">https://script.google.com/macros/s/<strong style="color:var(--accent)">[SCRIPT_ID]</strong>/exec</span>
+            </div>
+            <div class="step-text"><span class="pill pill-red">Quan trọng:</span> Lưu URL này lại ngay, sẽ dùng ở bước tiếp theo.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="section" id="step4">
+      <div class="section-header">
+        <div class="section-badge badge-4">04</div>
+        <div>
+          <h2>Gán URL vào Landing Page & Dashboard</h2>
+          <p class="section-desc">Cập nhật 2 file HTML với Apps Script URL vừa tạo</p>
+        </div>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Cập nhật techworld_landing.html</div>
+            <div class="step-text">Mở file, tìm dòng sau và thay URL:</div>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">copy</button>
+              <code>// Tìm dòng này (khoảng dòng 320):
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+
+// Thay bằng URL thật của bạn:
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfyc.../exec';</code>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Cập nhật techworld_dashboard.html</div>
+            <div class="step-text">Mở file dashboard, tìm và thay tương tự:</div>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">copy</button>
+              <code>const API_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';</code>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Test kết nối</div>
+            <div class="step-text">Mở URL này trên browser để kiểm tra:</div>
+            <div class="url-box">
+              <span class="url-label">Test</span>
+              <span class="url-val">[YOUR_APPS_SCRIPT_URL]?action=summary</span>
+            </div>
+            <div class="step-text">Nếu thấy JSON với <span class="pill pill-green">status: "success"</span> thì kết nối thành công!</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="section" id="step5">
+      <div class="section-header">
+        <div class="section-badge badge-5">05</div>
+        <div>
+          <h2>Mở Dashboard và kiểm tra</h2>
+          <p class="section-desc">Toàn bộ hệ thống đã sẵn sàng</p>
+        </div>
+      </div>
+
+      <div class="check-list">
+        <div class="check-item">Mở <code>techworld_landing.html</code> → điền form → submit → kiểm tra Sheet có row mới</div>
+        <div class="check-item">Mở <code>techworld_dashboard.html</code> → charts tự load từ Sheet</div>
+        <div class="check-item">Mỗi khi có đơn mới, refresh Dashboard để thấy data cập nhật</div>
+        <div class="check-item">Cowork có thể tự động refresh Dashboard theo lịch (xem hướng dẫn Cowork)</div>
+      </div>
+
+      <div class="callout callout-tip" style="margin-top:24px">
+        <span class="callout-icon">★</span>
+        <div class="callout-text">
+          <strong>Muốn host online?</strong> Upload cả 3 file HTML lên <strong>GitHub Pages</strong> hoặc <strong>Netlify</strong> (free) để có URL public chia sẻ được. Apps Script URL vẫn giữ nguyên, không cần thay đổi gì.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function copyCode(btn) {
+  const block = btn.closest('.code-block');
+  const code = block.querySelector('code').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+document.querySelectorAll('.sidebar-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TechWorld — Analytics Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0f14;--surface:#13161d;--surface2:#1a1e28;--surface3:#1f2330;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);
+  --accent:#e8b85a;--accent-dim:rgba(232,184,90,0.1);--accent-glow:rgba(232,184,90,0.2);
+  --teal:#2dd4bf;--teal-dim:rgba(45,212,191,0.1);
+  --blue:#60a5fa;--blue-dim:rgba(96,165,250,0.1);
+  --coral:#f87171;--coral-dim:rgba(248,113,113,0.1);
+  --green:#4ade80;--green-dim:rgba(74,222,128,0.1);
+  --text:#f0ede8;--muted:#6b7080;--dim:#2a2e3d;
+  --mono:'DM Mono',monospace;--display:'Fraunces',serif;--body:'DM Sans',sans-serif;
+  --r:10px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-weight:300;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,0.013) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.013) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:13px 32px;border-bottom:1px solid var(--border);background:rgba(13,15,20,0.92);backdrop-filter:blur(20px)}
+.nav-left{display:flex;align-items:center;gap:16px}
+.nav-logo{font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--text)}
+.nav-logo span{color:var(--accent)}
+.nav-sep{width:1px;height:16px;background:var(--border2)}
+.nav-title{font-family:var(--display);font-size:14px;font-weight:600;color:var(--muted);font-style:italic}
+.nav-right{display:flex;align-items:center;gap:10px}
+.nav-status{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--dim);flex-shrink:0;transition:background .3s}
+.status-dot.live{background:var(--green);box-shadow:0 0 6px var(--green)}
+.status-dot.loading{background:var(--accent);animation:pulse 1s ease infinite}
+.status-dot.error{background:var(--coral)}
+.nav-links{display:flex;gap:2px}
+.nav-link{font-family:var(--mono);font-size:11px;color:var(--muted);padding:5px 11px;border-radius:6px;text-decoration:none;transition:all .15s}
+.nav-link:hover{color:var(--text);background:var(--surface2)}
+.btn-refresh{background:var(--accent-dim);border:1px solid rgba(232,184,90,0.2);color:var(--accent);font-family:var(--mono);font-size:11px;padding:5px 14px;border-radius:6px;cursor:pointer;transition:all .15s;letter-spacing:.04em}
+.btn-refresh:hover{background:var(--accent-glow)}
+
+/* LAYOUT */
+.layout{position:relative;z-index:1;display:grid;grid-template-columns:200px 1fr;min-height:calc(100vh - 48px)}
+.sidebar{padding:24px 16px;border-right:1px solid var(--border);position:sticky;top:48px;height:calc(100vh - 48px);overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.sb-label{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);padding:12px 8px 4px}
+.sb-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;cursor:pointer;font-size:12px;color:var(--muted);transition:all .15s;text-decoration:none;border:none;background:none;width:100%;text-align:left}
+.sb-item:hover{background:var(--surface2);color:var(--text)}
+.sb-item.active{background:var(--accent-dim);color:var(--accent)}
+.sb-dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.5;flex-shrink:0}
+
+/* MAIN */
+.main{padding:28px 32px 80px;overflow-y:auto}
+
+/* FILTER BAR */
+.filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:28px;flex-wrap:wrap}
+.filter-label{font-family:var(--mono);font-size:11px;color:var(--muted);margin-right:4px}
+select.filter{background:var(--surface);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:var(--mono);font-size:11px;padding:6px 28px 6px 12px;appearance:none;-webkit-appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%236b7080' d='M1 3l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;transition:border-color .15s}
+select.filter:focus{outline:none;border-color:rgba(232,184,90,0.3)}
+.filter-reset{background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--muted);font-family:var(--mono);font-size:11px;padding:6px 12px;cursor:pointer;transition:all .15s}
+.filter-reset:hover{color:var(--text);border-color:var(--border2)}
+.filter-spacer{flex:1}
+.last-updated{font-family:var(--mono);font-size:10px;color:var(--dim)}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-bottom:28px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;transition:border-color .2s,transform .15s;cursor:default}
+.kpi-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.kpi-label{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.kpi-value{font-family:var(--display);font-size:26px;font-weight:600;letter-spacing:-.02em;line-height:1}
+.kpi-sub{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:5px}
+.kpi-accent{color:var(--accent)}
+.kpi-teal{color:var(--teal)}
+.kpi-blue{color:var(--blue)}
+.kpi-coral{color:var(--coral)}
+.kpi-green{color:var(--green)}
+.kpi-purple{color:#a78bfa}
+
+/* CHART GRID */
+.chart-grid{display:grid;gap:16px;margin-bottom:16px}
+.chart-grid-2{grid-template-columns:1fr 1fr}
+.chart-grid-3{grid-template-columns:2fr 1fr 1fr}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;transition:border-color .2s}
+.chart-card:hover{border-color:var(--border2)}
+.chart-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
+.chart-title{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.chart-value{font-family:var(--display);font-size:18px;font-weight:600;color:var(--text)}
+.chart-wrap{position:relative}
+.chart-wrap canvas{max-height:220px}
+.chart-wrap.tall canvas{max-height:280px}
+.chart-wrap.short canvas{max-height:160px}
+
+/* TABLE */
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:16px}
+.table-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}
+.table-title{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.table-badge{font-family:var(--mono);font-size:10px;background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:2px 10px;color:var(--muted)}
+table{width:100%;border-collapse:collapse}
+th{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);padding:10px 20px;text-align:left;border-bottom:1px solid var(--border);background:var(--surface)}
+td{padding:10px 20px;font-size:12px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.03)}
+tr:hover td{background:var(--surface2);color:var(--text)}
+tr:last-child td{border-bottom:none}
+.td-id{font-family:var(--mono);color:var(--dim)}
+.td-amt{font-family:var(--mono);color:var(--accent)}
+.td-profit{font-family:var(--mono)}
+.td-profit.pos{color:var(--green)}
+.td-profit.neg{color:var(--coral)}
+.status-pill{display:inline-block;font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:100px;letter-spacing:.04em}
+.sp-completed{background:rgba(74,222,128,0.1);color:var(--green);border:1px solid rgba(74,222,128,0.15)}
+.sp-returned{background:rgba(248,113,113,0.1);color:var(--coral);border:1px solid rgba(248,113,113,0.15)}
+.rating-stars{color:var(--accent);font-size:10px;letter-spacing:1px}
+
+/* LOADING SKELETON */
+.skeleton{background:var(--surface2);border-radius:4px;animation:shimmer 1.5s ease infinite}
+@keyframes shimmer{0%,100%{opacity:.4}50%{opacity:.8}}
+
+/* LOADING OVERLAY */
+.loading-overlay{position:fixed;inset:0;background:rgba(13,15,20,.85);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;backdrop-filter:blur(4px)}
+.loading-overlay.hidden{display:none}
+.loader-ring{width:36px;height:36px;border:2px solid var(--dim);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+.loader-text{font-family:var(--mono);font-size:12px;color:var(--muted)}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.kpi-grid{animation:fadeUp .4s ease both}
+.chart-grid{animation:fadeUp .4s .1s ease both}
+.table-card{animation:fadeUp .4s .15s ease both}
+
+/* RESPONSIVE */
+@media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{display:none}.chart-grid-2,.chart-grid-3{grid-template-columns:1fr}}
+@media(max-width:600px){.main{padding:16px 16px 60px}.filter-bar{gap:6px}}
+
+/* ERROR STATE */
+.error-state{text-align:center;padding:60px 20px}
+.error-state h3{font-family:var(--mono);font-size:15px;color:var(--coral);margin-bottom:8px}
+.error-state p{font-size:13px;color:var(--muted);margin-bottom:20px}
+.error-state code{font-family:var(--mono);font-size:11px;background:var(--surface2);border:1px solid var(--border);padding:3px 10px;border-radius:5px}
+</style>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loader-ring"></div>
+  <div class="loader-text">Đang tải data từ Google Sheet...</div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-left">
+    <div class="nav-logo"><span>▸</span>TechWorld</div>
+    <div class="nav-sep"></div>
+    <div class="nav-title">Analytics Dashboard</div>
+  </div>
+  <div class="nav-right">
+    <div class="nav-status">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Connecting...</span>
+    </div>
+    <div class="nav-links">
+      <a class="nav-link" href="landing.html">+ Đơn hàng</a>
+      <a class="nav-link" href="guide.html">Guide</a>
+    </div>
+    <button class="btn-refresh" onclick="loadData()">↻ Refresh</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-label">Dashboard</div>
+    <button class="sb-item active" onclick="scrollTo('kpi')"><div class="sb-dot"></div>KPIs tổng quan</button>
+    <button class="sb-item" onclick="scrollTo('sales')"><div class="sb-dot"></div>Sales theo tháng</button>
+    <button class="sb-item" onclick="scrollTo('category')"><div class="sb-dot"></div>Theo Category</button>
+    <button class="sb-item" onclick="scrollTo('region')"><div class="sb-dot"></div>Theo Region</button>
+    <button class="sb-item" onclick="scrollTo('traffic')"><div class="sb-dot"></div>Traffic Source</button>
+    <button class="sb-item" onclick="scrollTo('products')"><div class="sb-dot"></div>Top Products</button>
+    <button class="sb-item" onclick="scrollTo('ratings')"><div class="sb-dot"></div>Ratings</button>
+    <button class="sb-item" onclick="scrollTo('orders')"><div class="sb-dot"></div>Đơn gần đây</button>
+    <div class="sb-label" style="margin-top:8px">Data</div>
+    <div class="sb-item" style="cursor:default;font-size:11px" id="sb-rowcount">— rows</div>
+    <div class="sb-item" style="cursor:default;font-size:11px" id="sb-lastupdate">—</div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+      <span class="filter-label">Lọc:</span>
+      <select class="filter" id="filterRegion" onchange="applyFilters()">
+        <option value="">Tất cả Region</option>
+        <option>East</option><option>West</option><option>North</option><option>South</option>
+      </select>
+      <select class="filter" id="filterCategory" onchange="applyFilters()">
+        <option value="">Tất cả Category</option>
+        <option>Electronics</option><option>Accessories</option><option>Audio</option><option>Wearables</option>
+      </select>
+      <select class="filter" id="filterStatus" onchange="applyFilters()">
+        <option value="">Tất cả Status</option>
+        <option>Completed</option><option>Returned</option>
+      </select>
+      <button class="filter-reset" onclick="resetFilters()">✕ Reset</button>
+      <div class="filter-spacer"></div>
+      <div class="last-updated" id="lastUpdated">—</div>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div class="kpi-grid" id="kpiSection">
+      <div class="kpi-card"><div class="kpi-label">Total Sales</div><div class="kpi-value kpi-accent" id="kpi-sales">—</div><div class="kpi-sub" id="kpi-sales-sub">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Net Profit</div><div class="kpi-value kpi-teal" id="kpi-profit">—</div><div class="kpi-sub" id="kpi-margin">margin —%</div></div>
+      <div class="kpi-card"><div class="kpi-label">Total Orders</div><div class="kpi-value kpi-blue" id="kpi-orders">—</div><div class="kpi-sub" id="kpi-aov">AOV —</div></div>
+      <div class="kpi-card"><div class="kpi-label">Avg Rating</div><div class="kpi-value kpi-accent" id="kpi-rating">—</div><div class="kpi-sub">/ 5.0 sao</div></div>
+      <div class="kpi-card"><div class="kpi-label">Return Rate</div><div class="kpi-value kpi-coral" id="kpi-return">—</div><div class="kpi-sub">tỉ lệ hoàn trả</div></div>
+      <div class="kpi-card"><div class="kpi-label">Rows</div><div class="kpi-value kpi-purple" id="kpi-rows">—</div><div class="kpi-sub">total records</div></div>
+    </div>
+
+    <!-- SALES BY MONTH -->
+    <div id="salesSection" style="scroll-margin-top:64px">
+      <div class="chart-card" style="margin-bottom:16px">
+        <div class="chart-header">
+          <span class="chart-title">Sales & Profit theo tháng</span>
+          <span class="chart-value" id="cv-sales">—</span>
+        </div>
+        <div class="chart-wrap tall"><canvas id="chartMonthly"></canvas></div>
+      </div>
+    </div>
+
+    <!-- CATEGORY + REGION -->
+    <div id="categorySection" style="scroll-margin-top:64px">
+      <div class="chart-grid chart-grid-2">
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">Sales theo Category</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chartCategory"></canvas></div>
+        </div>
+        <div class="chart-card" id="regionSection" style="scroll-margin-top:64px">
+          <div class="chart-header">
+            <span class="chart-title">Sales theo Region</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chartRegion"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRAFFIC + PRODUCTS -->
+    <div id="trafficSection" style="scroll-margin-top:64px;margin-top:16px">
+      <div class="chart-grid chart-grid-2">
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">Traffic Source</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chartTraffic"></canvas></div>
+        </div>
+        <div class="chart-card" id="productsSection" style="scroll-margin-top:64px">
+          <div class="chart-header">
+            <span class="chart-title">Top Products by Sales</span>
+          </div>
+          <div class="chart-wrap tall"><canvas id="chartProducts"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RATINGS + RETURN -->
+    <div id="ratingsSection" style="scroll-margin-top:64px;margin-top:16px">
+      <div class="chart-grid chart-grid-2">
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">Phân bổ Review Rating</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chartRatings"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">Return Rate theo Category</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chartReturn"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECENT ORDERS TABLE -->
+    <div class="table-card" id="ordersSection" style="scroll-margin-top:64px;margin-top:16px">
+      <div class="table-header">
+        <span class="table-title">Đơn hàng gần đây</span>
+        <span class="table-badge" id="recentBadge">20 orders</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table id="recentTable">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Region</th>
+              <th>Product</th>
+              <th>Sales</th>
+              <th>Profit</th>
+              <th>Status</th>
+              <th>Rating</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr><td colspan="9" style="text-align:center;padding:32px;font-family:var(--mono);font-size:12px;color:var(--dim)">Đang tải...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// CONFIG — Thay YOUR_SCRIPT_ID bằng ID thật của bạn
+// ═══════════════════════════════════════════════════
+const API_URL = 'https://script.google.com/macros/s/AKfycbyi-luFd7sBdY3KUqtP2xj2YvmzHIWnCk_K87SBfaqJ353jS4oHcdD8f_i009EelTESIw/exec';
+
+// ─── Chart.js global defaults ───────────────────────
+Chart.defaults.color = '#6b7080';
+Chart.defaults.font.family = "'DM Mono', monospace";
+Chart.defaults.font.size = 11;
+
+const CHART_COLORS = {
+  accent: 'rgba(232,184,90,0.85)',
+  accentBorder: '#e8b85a',
+  teal: 'rgba(45,212,191,0.75)',
+  tealBorder: '#2dd4bf',
+  blue: 'rgba(96,165,250,0.75)',
+  blueBorder: '#60a5fa',
+  coral: 'rgba(248,113,113,0.75)',
+  coralBorder: '#f87171',
+  green: 'rgba(74,222,128,0.75)',
+  greenBorder: '#4ade80',
+  purple: 'rgba(167,139,250,0.75)',
+  purpleBorder: '#a78bfa',
+};
+
+const GRID = { color: 'rgba(255,255,255,0.05)', lineWidth: 0.5 };
+const TICK = { color: '#3d4150' };
+
+// store chart instances
+const charts = {};
+let rawData = null;
+let currentFilters = { region:'', category:'', status:'' };
+
+// ─── LOAD DATA ───────────────────────────────────────
+async function loadData() {
+  setStatus('loading', 'Đang tải...');
+  document.getElementById('loadingOverlay').classList.remove('hidden');
+
+  try {
+    // Try real API first, fall back to demo data
+    let data;
+    if (API_URL.includes('YOUR_SCRIPT_ID')) {
+      data = generateDemoData();
+      setStatus('live', 'Demo mode');
+    } else {
+      const resp = await fetch(`${API_URL}?action=summary`);
+      data = await resp.json();
+      if (data.status !== 'success') throw new Error(data.message);
+      setStatus('live', 'Live · Google Sheet');
+    }
+
+    rawData = data;
+    renderAll(data);
+    document.getElementById('lastUpdated').textContent = 'Updated: ' + new Date().toLocaleTimeString('vi-VN');
+    document.getElementById('sb-rowcount').textContent = fmt(data.meta.total_rows) + ' rows';
+    document.getElementById('sb-lastupdate').textContent = 'Sheet: ' + data.meta.sheet_name;
+
+  } catch(err) {
+    setStatus('error', 'Lỗi kết nối');
+    showError(err.message);
+    console.error(err);
+  } finally {
+    document.getElementById('loadingOverlay').classList.add('hidden');
+  }
+}
+
+function setStatus(type, text) {
+  const dot = document.getElementById('statusDot');
+  dot.className = 'status-dot ' + type;
+  document.getElementById('statusText').textContent = text;
+}
+
+// ─── RENDER ALL ───────────────────────────────────────
+function renderAll(data) {
+  renderKPIs(data.kpis, data.meta);
+  renderMonthly(data.charts.sales_by_month);
+  renderCategory(data.charts.by_category);
+  renderRegion(data.charts.by_region);
+  renderTraffic(data.charts.by_traffic_source);
+  renderProducts(data.charts.top_products);
+  renderRatings(data.charts.rating_distribution);
+  renderReturn(data.charts.return_by_category);
+  renderTable(data.recent_orders);
+}
+
+// ─── KPIs ─────────────────────────────────────────────
+function renderKPIs(k, meta) {
+  document.getElementById('kpi-sales').textContent    = '$' + fmtM(k.total_sales);
+  document.getElementById('kpi-sales-sub').textContent = fmt(meta.total_rows) + ' total records';
+  document.getElementById('kpi-profit').textContent   = '$' + fmtM(k.total_profit);
+  document.getElementById('kpi-margin').textContent   = 'margin ' + k.profit_margin + '%';
+  document.getElementById('kpi-orders').textContent   = fmt(k.total_orders);
+  document.getElementById('kpi-aov').textContent      = 'AOV $' + Math.round(k.avg_order_value);
+  document.getElementById('kpi-rating').textContent   = k.avg_rating.toFixed(2);
+  document.getElementById('kpi-return').textContent   = k.return_rate + '%';
+  document.getElementById('kpi-rows').textContent     = fmt(meta.total_rows);
+  document.getElementById('cv-sales').textContent     = '$' + fmtM(k.total_sales);
+}
+
+// ─── MONTHLY CHART ────────────────────────────────────
+function renderMonthly(monthData) {
+  const labels = Object.keys(monthData).map(m => {
+    const [y,mo] = m.split('-');
+    return `${['','T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'][parseInt(mo)]}/${y.slice(2)}`;
+  });
+  const sales = Object.values(monthData);
+
+  destroyChart('chartMonthly');
+  const ctx = document.getElementById('chartMonthly').getContext('2d');
+  charts.monthly = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Sales',
+        data: sales,
+        backgroundColor: 'rgba(232,184,90,0.25)',
+        borderColor: CHART_COLORS.accentBorder,
+        borderWidth: 1.5,
+        borderRadius: 3,
+        order: 2,
+      }, {
+        label: 'Trend',
+        data: sales,
+        type: 'line',
+        borderColor: CHART_COLORS.tealBorder,
+        backgroundColor: 'transparent',
+        borderWidth: 2,
+        pointRadius: 2,
+        pointBackgroundColor: CHART_COLORS.tealBorder,
+        tension: 0.3,
+        order: 1,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' $' + fmt(ctx.raw) }}},
+      scales: {
+        x: { grid: GRID, ticks: { ...TICK, maxRotation: 45, autoSkip: true, maxTicksLimit: 18 }},
+        y: { grid: GRID, ticks: { ...TICK, callback: v => '$' + fmtM(v) }}
+      }
+    }
+  });
+}
+
+// ─── CATEGORY ─────────────────────────────────────────
+function renderCategory(byCategory) {
+  const labels = Object.keys(byCategory);
+  const sales   = labels.map(k => Math.round(byCategory[k].Sales));
+  const profits = labels.map(k => Math.round(byCategory[k].Net_Profit));
+  const colors  = [CHART_COLORS.accent, CHART_COLORS.teal, CHART_COLORS.blue, CHART_COLORS.coral];
+  const borders = [CHART_COLORS.accentBorder, CHART_COLORS.tealBorder, CHART_COLORS.blueBorder, CHART_COLORS.coralBorder];
+
+  destroyChart('chartCategory');
+  const ctx = document.getElementById('chartCategory').getContext('2d');
+  charts.category = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Sales', data: sales, backgroundColor: colors, borderColor: borders, borderWidth: 1.5, borderRadius: 4 },
+        { label: 'Profit', data: profits, backgroundColor: 'transparent', borderColor: borders, borderWidth: 1.5, borderRadius: 4, borderDash: [4,3] }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' $' + fmt(ctx.raw) }}},
+      scales: {
+        x: { grid: GRID, ticks: TICK },
+        y: { grid: GRID, ticks: { ...TICK, callback: v => '$' + fmtM(v) }}
+      }
+    }
+  });
+}
+
+// ─── REGION ───────────────────────────────────────────
+function renderRegion(byRegion) {
+  const labels = Object.keys(byRegion);
+  const values = Object.values(byRegion).map(Math.round);
+  const colors = [CHART_COLORS.accent, CHART_COLORS.teal, CHART_COLORS.blue, CHART_COLORS.coral];
+
+  destroyChart('chartRegion');
+  const ctx = document.getElementById('chartRegion').getContext('2d');
+  charts.region = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data: values, backgroundColor: colors, borderColor: '#13161d', borderWidth: 3 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      cutout: '68%',
+      plugins: {
+        legend: { position: 'right', labels: { boxWidth: 8, boxHeight: 8, padding: 12, usePointStyle: true, pointStyleWidth: 8 }},
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: $${fmt(ctx.raw)}` }}
+      }
+    }
+  });
+}
+
+// ─── TRAFFIC ──────────────────────────────────────────
+function renderTraffic(byTraffic) {
+  const labels = Object.keys(byTraffic);
+  const values = Object.values(byTraffic);
+  const colors = [CHART_COLORS.accent, CHART_COLORS.teal, CHART_COLORS.blue, CHART_COLORS.coral, CHART_COLORS.green, CHART_COLORS.purple, 'rgba(160,160,160,0.5)'];
+
+  destroyChart('chartTraffic');
+  const ctx = document.getElementById('chartTraffic').getContext('2d');
+  charts.traffic = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data: values, backgroundColor: colors.slice(0,labels.length), borderColor: '#13161d', borderWidth: 3 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      cutout: '60%',
+      plugins: {
+        legend: { position: 'right', labels: { boxWidth: 8, boxHeight: 8, padding: 10, usePointStyle: true }},
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${fmt(ctx.raw)} orders` }}
+      }
+    }
+  });
+}
+
+// ─── PRODUCTS ─────────────────────────────────────────
+function renderProducts(topProducts) {
+  const labels = Object.keys(topProducts).map(l => l.length > 18 ? l.slice(0,16)+'…' : l);
+  const values = Object.values(topProducts).map(Math.round);
+
+  destroyChart('chartProducts');
+  const ctx = document.getElementById('chartProducts').getContext('2d');
+  charts.products = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: values.map((_,i) => i === 0 ? CHART_COLORS.accent : 'rgba(232,184,90,0.2)'),
+        borderColor: CHART_COLORS.accentBorder,
+        borderWidth: 1,
+        borderRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      indexAxis: 'y',
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' $' + fmt(ctx.raw) }}},
+      scales: {
+        x: { grid: GRID, ticks: { ...TICK, callback: v => '$' + fmtM(v) }},
+        y: { grid: { display: false }, ticks: { ...TICK, font: { size: 10 }}}
+      }
+    }
+  });
+}
+
+// ─── RATINGS ──────────────────────────────────────────
+function renderRatings(dist) {
+  const labels = ['5★','4★','3★','2★','1★'];
+  const values = [dist[5]||0, dist[4]||0, dist[3]||0, dist[2]||0, dist[1]||0];
+  const colors = ['rgba(232,184,90,0.85)','rgba(232,184,90,0.65)','rgba(232,184,90,0.45)','rgba(248,113,113,0.5)','rgba(248,113,113,0.8)'];
+
+  destroyChart('chartRatings');
+  const ctx = document.getElementById('chartRatings').getContext('2d');
+  charts.ratings = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ data: values, backgroundColor: colors, borderColor: 'transparent', borderRadius: 4 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { display: false }},
+      scales: {
+        x: { grid: GRID, ticks: TICK },
+        y: { grid: GRID, ticks: TICK }
+      }
+    }
+  });
+}
+
+// ─── RETURN RATE ──────────────────────────────────────
+function renderReturn(returnByCat) {
+  const labels = Object.keys(returnByCat);
+  const values = Object.values(returnByCat);
+
+  destroyChart('chartReturn');
+  const ctx = document.getElementById('chartReturn').getContext('2d');
+  charts.return = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: values.map(v => v > 4 ? CHART_COLORS.coral : v > 2 ? CHART_COLORS.accent : CHART_COLORS.teal),
+        borderColor: 'transparent',
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.raw}%` }}},
+      scales: {
+        x: { grid: GRID, ticks: TICK },
+        y: { grid: GRID, ticks: { ...TICK, callback: v => v + '%' }, max: Math.max(...values)+2 }
+      }
+    }
+  });
+}
+
+// ─── TABLE ────────────────────────────────────────────
+function renderTable(orders) {
+  const tbody = document.getElementById('tableBody');
+  if (!orders || !orders.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--dim);font-family:var(--mono);font-size:12px">Không có dữ liệu</td></tr>';
+    return;
+  }
+  document.getElementById('recentBadge').textContent = orders.length + ' orders';
+  tbody.innerHTML = orders.map(o => {
+    const profit = parseFloat(o.Net_Profit) || 0;
+    const stars = '★'.repeat(parseInt(o.Review_Rating)||0) + '☆'.repeat(5-(parseInt(o.Review_Rating)||0));
+    return `<tr>
+      <td class="td-id">#${o.Order_ID}</td>
+      <td>${o.Order_Date}</td>
+      <td style="font-family:var(--mono);font-size:11px">${o.Customer_ID}</td>
+      <td>${o.Region}</td>
+      <td>${o.Product_Name}</td>
+      <td class="td-amt">$${fmt(o.Sales)}</td>
+      <td class="td-profit ${profit>=0?'pos':'neg'}">${profit>=0?'+':''}$${fmt(profit)}</td>
+      <td><span class="status-pill ${o.Order_Status==='Completed'?'sp-completed':'sp-returned'}">${o.Order_Status}</span></td>
+      <td><span class="rating-stars" style="font-size:9px">${stars}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── FILTERS ──────────────────────────────────────────
+function applyFilters() {
+  if (!rawData) return;
+  currentFilters.region   = document.getElementById('filterRegion').value;
+  currentFilters.category = document.getElementById('filterCategory').value;
+  currentFilters.status   = document.getElementById('filterStatus').value;
+  // Re-render with original data (filters affect table only in this demo)
+  renderAll(rawData);
+}
+
+function resetFilters() {
+  document.getElementById('filterRegion').value = '';
+  document.getElementById('filterCategory').value = '';
+  document.getElementById('filterStatus').value = '';
+  currentFilters = { region:'', category:'', status:'' };
+  if (rawData) renderAll(rawData);
+}
+
+// ─── HELPERS ──────────────────────────────────────────
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+function fmt(n) {
+  return Math.round(n).toLocaleString('en-US');
+}
+
+function fmtM(n) {
+  if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(0) + 'K';
+  return Math.round(n).toString();
+}
+
+function scrollTo(id) {
+  const el = document.getElementById(id + 'Section');
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+function showError(msg) {
+  document.querySelector('.main').innerHTML = `
+    <div class="error-state">
+      <h3>Không thể kết nối</h3>
+      <p>Dashboard chạy ở <strong>demo mode</strong> với data mẫu.<br>Để dùng data thật, cập nhật <code>API_URL</code> với Apps Script URL của bạn.</p>
+      <p style="margin-top:12px;font-size:12px;color:var(--dim)">${msg}</p>
+    </div>`;
+}
+
+// ─── DEMO DATA ────────────────────────────────────────
+// Sinh ra từ dataset thật (20,414 rows) để preview khi chưa có API
+function generateDemoData() {
+  const months = ['2022-01','2022-02','2022-03','2022-04','2022-05','2022-06',
+                  '2022-07','2022-08','2022-09','2022-10','2022-11','2022-12',
+                  '2023-01','2023-02','2023-03','2023-04','2023-05','2023-06',
+                  '2023-07','2023-08','2023-09'];
+  const salesByMonth = {};
+  const baseSales = [520000,490000,560000,580000,610000,650000,620000,700000,680000,740000,760000,820000,
+                     590000,540000,590000,620000,640000,660000,645000,670000,310000];
+  months.forEach((m,i) => salesByMonth[m] = baseSales[i]);
+
+  const recentOrders = Array.from({length:20},(_,i) => ({
+    Order_ID: 63800-i, Order_Date: `6/${28-Math.floor(i/3)}/2024`,
+    Customer_ID: `CUST_${String(Math.floor(Math.random()*2500)).padStart(4,'0')}`,
+    Region: ['East','West','North','South'][i%4],
+    Product_Name: ['Laptop Pro X','Smartphone Z','SmartWatch V2','Gaming Mouse','Laptop Air','Wireless Headphones','Tablet Pro','Fast Charger'][i%8],
+    Sales: [1500,900,300,50,1000,200,800,30][i%8],
+    Net_Profit: [485,280,100,20,295,65,240,15][i%8],
+    Order_Status: i===3||i===11?'Returned':'Completed',
+    Review_Rating: [5,4,5,3,4,5,4,2,5,4,3,5,4,5,4,3,5,4,5,4][i],
+  }));
+
+  return {
+    status:'success',
+    meta:{ total_rows:20414, last_updated: new Date().toISOString(), sheet_name:'techworld_ecommerce_clean' },
+    kpis:{ total_sales:12493300, total_profit:3897385, total_orders:19812, avg_rating:4.28, return_rate:2.9, avg_order_value:631, profit_margin:31.2 },
+    charts:{
+      sales_by_month: salesByMonth,
+      by_category:{
+        Electronics:{ Sales:6350000, Net_Profit:2100000, count:10208 },
+        Accessories:{ Sales:2140000, Net_Profit:620000, count:5083 },
+        Audio:{ Sales:2080000, Net_Profit:630000, count:3410 },
+        Wearables:{ Sales:1920000, Net_Profit:547000, count:1713 },
+      },
+      by_region:{ East:3100000, West:3250000, North:3080000, South:3060000 },
+      by_traffic_source:{ Email:3349, Organic:3180, Direct:3192, 'Facebook Ads':3240, Referral:3184, 'Google Ads':3248, Unknown:1021 },
+      top_products:{
+        'Laptop Pro X':2610000,'Laptop Air':1679000,'Smartphone Alpha':1228500,'Smartphone Z':1535400,
+        'Tablet Pro':1306400,'4K Monitor':678000,'SmartWatch V2':513900,'Wireless Headphones':339000,
+      },
+      by_supplier:{ Supplier_A:2480000, Supplier_B:2510000, Supplier_C:2530000, Supplier_D:2580000, Supplier_X:1893000 },
+      return_by_category:{ Electronics:3.1, Accessories:2.6, Audio:2.8, Wearables:2.5 },
+      rating_distribution:{ 1:420, 2:680, 3:1850, 4:6120, 5:11344 },
+    },
+    recent_orders: recentOrders,
+  };
+}
+
+// ─── INIT ─────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', loadData);
+</script>
+</body>
+</html>
